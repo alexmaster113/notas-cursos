@@ -1,0 +1,81 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#101319"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png"><title>Notas</title>
+<style>
+:root{--bg:#eef1f5;--cd:#fff;--tx:#161a22;--mu:#667085;--ac:#2f5bff;--bd:#d9dee7}
+@media(prefers-color-scheme:dark){:root{--bg:#101319;--cd:#1a1f29;--tx:#e8ebf1;--mu:#98a1b3;--ac:#7b9bff;--bd:#2a3140}}
+*{box-sizing:border-box}html,body{height:100%}body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.4 system-ui,sans-serif;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top)}
+#m{flex:1;overflow:auto;padding:14px 14px 80px}#sy{position:fixed;right:10px;top:calc(env(safe-area-inset-top) + 2px);font-size:11px;color:var(--mu)}
+nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--cd);border-top:1px solid var(--bd);padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;border:0;background:0;color:var(--mu);padding:12px 0;font:inherit;font-size:13px}nav button.on{color:var(--ac);font-weight:700}
+h2,h3{margin:14px 0 8px}h3{font-size:15px;display:flex;align-items:center;gap:8px}i.dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+input,textarea{width:100%;font:inherit;color:var(--tx);background:var(--cd);border:1px solid var(--bd);border-radius:10px;padding:11px;margin:4px 0 12px}
+label{display:block;font-size:13px;color:var(--mu)}.ds{display:flex;gap:6px;margin:6px 0 12px}.dc{flex:1;text-align:center;border:1px solid var(--bd);border-radius:10px;padding:8px 0;background:var(--cd);color:var(--tx)}.dc input{display:none}.dc:has(input:checked){background:var(--ac);color:#fff;border-color:var(--ac)}
+.btn,.btn2,.chip{display:block;width:100%;border:0;border-radius:12px;padding:13px;font:inherit;font-weight:600;margin:8px 0;background:var(--ac);color:#fff}.btn2{background:var(--cd);color:var(--tx);border:1px solid var(--bd)}.chip{display:inline-block;width:auto;padding:7px 12px;margin:0 6px 8px 0;font-size:14px;background:var(--cd);color:var(--tx);border:1px solid var(--bd)}.chip.on{background:var(--ac);color:#fff}
+.bar{display:flex;align-items:center;gap:10px;margin-bottom:10px}.bar b{white-space:nowrap}.bar input{margin:0;flex:1;min-width:0}.ic{border:0;background:0;color:var(--tx);font-size:22px;padding:4px 8px}
+#tx{height:calc(100vh - 250px);font-family:Georgia,serif;font-size:18px;line-height:1.55;resize:none;margin:6px 0 8px}.bar2{display:flex;gap:8px;align-items:center}.bar2 button{border:1px solid var(--bd);background:var(--cd);color:var(--tx);border-radius:8px;padding:6px 14px;font-size:17px}.bar2 span{margin-left:auto;font-size:12px;color:var(--mu)}
+.g{margin:0 0 12px;border-radius:12px;overflow:hidden;border:1px solid var(--bd);background:var(--cd)}.g.m{border-left:4px solid var(--ac)}.s{padding:11px 13px;border-top:1px solid var(--bd)}.s:first-child{border-top:0}.s div{display:flex;justify-content:space-between}.s span{color:var(--mu);font-size:13px}.s p{margin:4px 0 0;color:var(--mu);font-size:14px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.big{display:block;width:100%;text-align:left;border:0;border-radius:14px;padding:20px;margin:10px 0;font:inherit;font-size:19px;font-weight:700;color:#fff}.row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--bd)}.mu{color:var(--mu);font-size:14px}
+</style></head><body><div id="sy"></div><div id="m"></div>
+<nav id="tb"><button onclick="home()">Hoy</button><button onclick="go('notas')">Notas</button><button onclick="go('tareas')">Tareas</button><button onclick="go('cfg')">Ajustes</button></nav>
+<script>
+const SB='https://yxvdpqzpiqkkcucdyywt.supabase.co',KEY='sb_publishable_mHsaAjfGkjz3hjptYCbLBA_z2ZD3y7o',LS='nc1',$=s=>document.querySelector(s);
+let S=JSON.parse(localStorage.getItem(LS)||'null')||{courses:[],sessions:[],sync:'1970-01-01T00:00:00Z',auth:null},V='',cur=null,q='',tm,sy;
+const save=()=>localStorage.setItem(LS,JSON.stringify(S)),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])),
+iso=d=>new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10),today=()=>iso(new Date()),dt=s=>new Date(s+'T12:00:00'),
+addd=(s,n)=>{const d=dt(s);d.setDate(d.getDate()+n);return iso(d)},wd=s=>dt(s).getDay(),fmt=s=>dt(s).toLocaleDateString('es-PE',{weekday:'short',day:'numeric',month:'short'}),
+live=a=>a.filter(x=>!x.deleted),status=t=>{$('#sy').textContent=t};
+function step(c,s,k){for(let i=1;i<15;i++){const d=addd(s,i*k);if(c.days.includes(wd(d)))return d}}
+function gen(){S.courses.forEach(c=>{if(c.deleted)return;const all=S.sessions.filter(s=>s.course_id==c.id);if(!all.length)return;let n=Math.max(0,...live(all).map(s=>s.number)),d=all.map(s=>s.date).sort().pop();
+ for(let x=step(c,d,1);x&&x<=today();x=step(c,x,1)){S.sessions.push({id:crypto.randomUUID(),course_id:c.id,number:++n,date:x,content:'',deleted:false,_d:1})}});save()}
+function go(v,x){V=v;cur=x;render()}
+function home(){const t=today(),cs=live(S.courses).filter(c=>c.days.includes(wd(t)));if(!cs.length)return go('tareas');if(cs.length==1)return openToday(cs[0].id);go('pick',cs.map(c=>c.id))}
+function openToday(id){const l=live(S.sessions).filter(s=>s.course_id==id).sort((a,b)=>b.number-a.number),s=l.find(s=>s.date==today())||l[0];s?go('ed',s.id):go('notas')}
+function render(){const m=$('#m');$('#tb').style.display=(!S.auth||V=='ed'||V=='setup')?'none':'flex';
+ document.querySelectorAll('nav button').forEach((b,i)=>b.classList.toggle('on',['','notas','tareas','cfg'][i]==V));
+ if(!S.auth){m.innerHTML=`<h2>Notas de clase</h2><p class=mu>Inicia sesión una sola vez.</p><label>Correo<input id=em type=email autocomplete=username></label><label>Contraseña<input id=pw type=password autocomplete=current-password></label><button class=btn onclick=doLogin()>Entrar</button><p id=er class=mu></p>`;return}
+ if(V=='pick')m.innerHTML=`<h2>¿Qué curso abres?</h2>`+cur.map(id=>{const c=S.courses.find(x=>x.id==id);return`<button class=big style="background:${c.color}" onclick="openToday('${id}')">${esc(c.name)}</button>`}).join('');
+ else if(V=='notas'){m.innerHTML=`<input id=q placeholder="Buscar en todas las notas" value="${esc(q)}" oninput="q=this.value;list()"><div id=ls></div>`;list()}
+ else if(V=='ed')ed();
+ else if(V=='tareas')m.innerHTML=`<h2>Tareas</h2><p class=mu>Las tareas y sus avisos llegan en la siguiente etapa.</p>`;
+ else if(V=='setup')setup();
+ else cfg()}
+function list(){const t=q.toLowerCase();let h='';live(S.courses).forEach(c=>{const l=live(S.sessions).filter(s=>s.course_id==c.id&&(!t||s.content.toLowerCase().includes(t))).sort((a,b)=>b.number-a.number);if(!l.length)return;h+=`<h3><i class=dot style="background:${c.color}"></i>${esc(c.name)}</h3>`;
+ const gs=[];l.forEach(s=>{const g=gs[gs.length-1];g&&g[0].date==s.date?g.push(s):gs.push([s])});
+ gs.forEach(g=>{h+=`<div class="g${g.length>1?' m':''}">`+g.map(s=>`<div class=s onclick="go('ed','${s.id}')"><div><b>SESIÓN ${s.number}</b><span>${fmt(s.date)}</span></div><p>${esc(s.content.split('\n')[0]||'(vacía)')}</p></div>`).join('')+`</div>`})});
+ $('#ls').innerHTML=h||'<p class=mu>No hay notas que mostrar.</p>'}
+function ed(){const s=S.sessions.find(x=>x.id==cur),c=S.courses.find(x=>x.id==s.course_id),sib=live(S.sessions).filter(x=>x.course_id==c.id&&x.date==s.date).sort((a,b)=>a.number-b.number),
+ oth=live(S.courses).filter(o=>o.id!=c.id&&o.days.includes(wd(today())));
+ $('#m').innerHTML=`<div class=bar><button class=ic onclick="go('notas')">‹</button><b style="color:${c.color}">${esc(c.abbr)}</b><b>SESIÓN ${s.number}</b><input type=date value="${s.date}" onchange="setDate(this.value)"><button class=ic onclick=delS()>🗑</button></div>`+
+ (sib.length>1?sib.map(x=>`<button class="chip${x.id==s.id?' on':''}" onclick="go('ed','${x.id}')">S${x.number}</button>`).join('')+'<br>':'')+oth.map(o=>`<button class=chip onclick="openToday('${o.id}')">→ ${esc(o.abbr)}</button>`).join('')+
+ `<textarea id=tx placeholder="Escribe aquí…" oninput="typ(this.value)">${esc(s.content)}</textarea><div class=bar2><button onclick="ins('☐ ')">☐</button><button onclick="ins('• ')">•</button><span id=st></span></div>`}
+function typ(v){const s=S.sessions.find(x=>x.id==cur);s.content=v;s._d=1;$('#st').textContent='Guardando…';clearTimeout(tm);tm=setTimeout(()=>{save();$('#st').textContent='Guardado ✓';sched()},400)}
+function ins(t){const x=$('#tx'),p=x.selectionStart,l=x.value.lastIndexOf('\n',p-1)+1;x.value=x.value.slice(0,l)+t+x.value.slice(l);x.selectionStart=x.selectionEnd=p+t.length;x.focus();typ(x.value)}
+function setDate(v){if(!v)return;const s=S.sessions.find(x=>x.id==cur);s.date=v;s._d=1;save();sched();ed()}
+function delS(){if(!confirm('¿Eliminar esta sesión y su nota?'))return;const s=S.sessions.find(x=>x.id==cur);s.deleted=true;s._d=1;save();sched();go('notas')}
+const DAYS=[['L',1],['M',2],['X',3],['J',4],['V',5],['S',6],['D',0]],COL=['#2f5bff','#e0457b','#f59e0b','#10b981','#8b5cf6','#06b6d4'];
+function setup(){$('#m').innerHTML=`<h2>Nuevo curso</h2><label>Nombre<input id=cn placeholder="Objetivos de Desarrollo Sostenible"></label><label>Abreviatura<input id=ca placeholder="ODS"></label><label>Días de clase (varios días = una sesión por día)</label><div class=ds>${DAYS.map(([l,n])=>`<label class=dc><input type=checkbox value=${n}>${l}</label>`).join('')}</div><label>Número de la sesión actual<input id=cs type=number min=1 value=1></label><label>Fecha de esa sesión<input id=cd type=date value="${today()}"></label><button class=btn onclick=addC()>Guardar curso</button>${S.courses.length?'<button class=btn2 onclick="go(\'cfg\')">Cancelar</button>':''}`}
+function addC(){const name=$('#cn').value.trim(),abbr=$('#ca').value.trim().toUpperCase(),days=[...document.querySelectorAll('.ds input:checked')].map(i=>+i.value),n=+$('#cs').value,d=$('#cd').value;
+ if(!name||!abbr||!days.length||!d||n<1)return alert('Completa nombre, abreviatura, al menos un día, sesión y fecha.');
+ const c={id:crypto.randomUUID(),name,abbr,color:COL[S.courses.length%COL.length],days,sort:S.courses.length,deleted:false,_d:1};S.courses.push(c);
+ let x=d;for(let k=n;k>=1;k--){S.sessions.push({id:crypto.randomUUID(),course_id:c.id,number:k,date:x,content:'',deleted:false,_d:1});x=step(c,x,-1)||addd(x,-7)}
+ gen();save();sched();go('cfg')}
+function cfg(){$('#m').innerHTML=`<h2>Cursos</h2>`+live(S.courses).map(c=>`<div class=row><span><i class=dot style="background:${c.color}"></i> ${esc(c.abbr)} <span class=mu>${c.days.map(d=>'DLMXJVS'[d]).join(' ')}</span></span><button class=ic onclick="delC('${c.id}')">🗑</button></div>`).join('')+
+ `<button class=btn onclick="go('setup')">+ Agregar curso</button><h2>Respaldo</h2><button class=btn2 onclick=exp()>Exportar copia</button><button class=btn2 onclick="$('#fi').click()">Importar copia</button><input id=fi type=file accept=.json hidden onchange=imp(this.files[0])><button class=btn2 onclick=sync()>Sincronizar ahora</button><button class=btn2 onclick=out()>Cerrar sesión</button>`}
+function delC(id){if(!confirm('¿Eliminar este curso y sus sesiones?'))return;const c=S.courses.find(x=>x.id==id);c.deleted=true;c._d=1;S.sessions.filter(s=>s.course_id==id).forEach(s=>{s.deleted=true;s._d=1});save();sched();cfg()}
+function exp(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({courses:S.courses,sessions:S.sessions})],{type:'application/json'}));a.download='notas-'+today()+'.json';a.click()}
+function imp(f){if(!f)return;f.text().then(t=>{const j=JSON.parse(t);S.courses=j.courses.map(x=>({...x,_d:1}));S.sessions=j.sessions.map(x=>({...x,_d:1}));save();sched();home()}).catch(()=>alert('Archivo no válido'))}
+function out(){if(confirm('¿Cerrar sesión? Tus notas siguen en este celular.')){S.auth=null;save();render()}}
+async function doLogin(){try{const r=await fetch(SB+'/auth/v1/token?grant_type=password',{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({email:$('#em').value.trim(),password:$('#pw').value})}),j=await r.json();if(!r.ok)throw j.msg||j.error_description||'Error';
+ S.auth={access:j.access_token,refresh:j.refresh_token,exp:Date.now()+j.expires_in*1000};save();boot()}catch(e){$('#er').textContent='No se pudo entrar: '+e}}
+async function tok(){const a=S.auth;if(!a)return null;if(a.exp-Date.now()>6e4)return a.access;const r=await fetch(SB+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:a.refresh})});if(!r.ok)return null;const j=await r.json();S.auth={access:j.access_token,refresh:j.refresh_token,exp:Date.now()+j.expires_in*1000};save();return S.auth.access}
+async function api(p,o={}){const t=await tok();if(!t)throw 0;return fetch(SB+'/rest/v1/'+p,{...o,headers:{apikey:KEY,Authorization:'Bearer '+t,'Content-Type':'application/json',...(o.headers||{})}})}
+const COLS={courses:['id','name','abbr','color','days','sort','deleted'],sessions:['id','course_id','number','date','content','deleted']};
+function sched(){clearTimeout(sy);sy=setTimeout(sync,3000)}
+async function sync(){if(!navigator.onLine||!S.auth)return;try{for(const T in COLS){const d=S[T].filter(x=>x._d);if(!d.length)continue;d.forEach(x=>x._d=0);
+ const r=await api(T+'?on_conflict=id',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(d.map(x=>Object.fromEntries(COLS[T].map(k=>[k,x[k]]))))});if(!r.ok){d.forEach(x=>x._d=1);throw 1}}
+ for(const T in COLS){const r=await api(T+'?select=*&order=updated_at.asc&updated_at=gt.'+encodeURIComponent(S.sync));if(!r.ok)throw 1;(await r.json()).forEach(w=>{const i=S[T].findIndex(x=>x.id==w.id);if(i<0)S[T].push(w);else if(!S[T][i]._d)S[T][i]=w;if(w.updated_at>S.sync)S.sync=w.updated_at})}
+ save();status('Sincronizado ✓')}catch(e){status('Sin sincronizar')}}
+async function boot(){if(!S.auth)return render();if(!live(S.courses).length)await Promise.race([sync(),new Promise(r=>setTimeout(r,4000))]);else sync();gen();live(S.courses).length?home():go('setup')}
+addEventListener('pagehide',save);addEventListener('online',sync);document.addEventListener('visibilitychange',()=>{if(document.hidden){save();sync()}});
+if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js');
+boot();
+</script></body></html>
