@@ -14,6 +14,8 @@ label{display:block;font-size:13px;color:var(--mu)}.ds{display:grid;grid-templat
 #tx{height:calc(100vh - 250px);font-family:Georgia,serif;font-size:18px;line-height:1.55;resize:none;margin:6px 0 8px}.bar2{display:flex;gap:8px;align-items:center}.bar2 button{border:1px solid var(--bd);background:var(--cd);color:var(--tx);border-radius:8px;padding:6px 14px;font-size:17px}.bar2 span{margin-left:auto;font-size:12px;color:var(--mu)}
 .g{margin:0 0 12px;border-radius:12px;overflow:hidden;border:1px solid var(--bd);background:var(--cd)}.g.m{border-left:4px solid var(--ac)}.s{padding:11px 13px;border-top:1px solid var(--bd)}.s:first-child{border-top:0}.s div{display:flex;justify-content:space-between}.s span{color:var(--mu);font-size:13px}.s p{margin:4px 0 0;color:var(--mu);font-size:14px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .big{display:block;width:100%;text-align:left;border:0;border-radius:14px;padding:20px;margin:10px 0;font:inherit;font-size:19px;font-weight:700;color:#fff}.row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--bd)}.mu{color:var(--mu);font-size:14px}
+button,.s,.dc{-webkit-tap-highlight-color:transparent;transition:transform .08s,filter .08s}button:active,.s:active,.dc:active{transform:scale(.96);filter:brightness(.8)}nav button:active{background:var(--bd)}
+.fd{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:1px solid var(--bd);background:var(--cd);color:var(--tx);border-radius:14px;padding:14px;margin:8px 0;font:inherit}.fd span{flex:1}.fd small{display:block;color:var(--mu);font-size:13px}.fd em{font-style:normal;font-size:22px;color:var(--mu)}.ind{margin:0 0 10px 10px}
 </style></head><body><div id="sy"></div><div id="m"></div>
 <nav id="tb"><button onclick="home()">Hoy</button><button onclick="go('notas')">Notas</button><button onclick="go('tareas')">Tareas</button><button onclick="go('cfg')">Ajustes</button></nav>
 <script>
@@ -38,9 +40,11 @@ function render(){const m=$('#m');$('#tb').style.display=(!S.auth||V=='ed'||V=='
  else if(V=='tareas')m.innerHTML=`<h2>Tareas</h2><p class=mu>Las tareas y sus avisos llegan en la siguiente etapa.</p>`;
  else if(V=='setup')setup();
  else cfg()}
-function list(){const t=q.toLowerCase();let h='';live(S.courses).forEach(c=>{const l=live(S.sessions).filter(s=>s.course_id==c.id&&(!t||s.content.toLowerCase().includes(t))).sort((a,b)=>b.number-a.number);if(!l.length)return;h+=`<h3><i class=dot style="background:${c.color}"></i>${esc(c.name)}</h3>`;
- const gs=[];l.forEach(s=>{const g=gs[gs.length-1];g&&g[0].date==s.date?g.push(s):gs.push([s])});
- gs.forEach(g=>{h+=`<div class="g${g.length>1?' m':''}">`+g.map(s=>`<div class=s onclick="go('ed','${s.id}')"><div><b>SESIÓN ${s.number}</b><span>${fmt(s.date)}</span></div><p>${esc(s.content.split('\n')[0]||'(vacía)')}</p></div>`).join('')+`</div>`})});
+let open=new Set();function tog(id){open.has(id)?open.delete(id):open.add(id);list()}
+function list(){const t=q.toLowerCase();let h='';live(S.courses).forEach(c=>{const all=live(S.sessions).filter(s=>s.course_id==c.id),l=all.filter(s=>!t||s.content.toLowerCase().includes(t)).sort((a,b)=>b.number-a.number);if(t&&!l.length)return;const o=t||open.has(c.id);
+ h+=`<button class=fd onclick="tog('${c.id}')"><i class=dot style="background:${c.color}"></i><span><b>${esc(c.name)}</b><small>${esc(c.abbr)} · ${all.length} sesiones</small></span><em>${o?'⌄':'›'}</em></button>`;
+ if(o){const gs=[];l.forEach(s=>{const g=gs[gs.length-1];g&&g[0].date==s.date?g.push(s):gs.push([s])});h+='<div class=ind>';
+ gs.forEach(g=>{h+=`<div class="g${g.length>1?' m':''}">`+g.map(s=>`<div class=s onclick="go('ed','${s.id}')"><div><b>SESIÓN ${s.number}</b><span>${fmt(s.date)}</span></div><p>${esc(s.content.split('\n')[0]||'(vacía)')}</p></div>`).join('')+`</div>`});h+='</div>'}});
  $('#ls').innerHTML=h||'<p class=mu>No hay notas que mostrar.</p>'}
 function ed(){const s=S.sessions.find(x=>x.id==cur),c=S.courses.find(x=>x.id==s.course_id),sib=live(S.sessions).filter(x=>x.course_id==c.id&&x.date==s.date).sort((a,b)=>a.number-b.number),
  oth=live(S.courses).filter(o=>o.id!=c.id&&o.days.includes(wd(today())));
@@ -77,5 +81,6 @@ async function sync(){if(!navigator.onLine||!S.auth)return;try{for(const T in CO
 async function boot(){if(!S.auth)return render();if(!live(S.courses).length)await Promise.race([sync(),new Promise(r=>setTimeout(r,4000))]);else sync();gen();live(S.courses).length?home():go('setup')}
 addEventListener('pagehide',save);addEventListener('online',sync);document.addEventListener('visibilitychange',()=>{if(document.hidden){save();sync()}});
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js');
+document.addEventListener('click',e=>{if(e.target.closest('button,.s,.dc'))navigator.vibrate&&navigator.vibrate(8)});
 boot();
 </script></body></html>
