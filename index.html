@@ -7,7 +7,7 @@
 nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--cd);border-top:1px solid var(--bd);padding-bottom:env(safe-area-inset-bottom)}
 nav button{flex:1;border:0;background:0;color:var(--mu);padding:12px 0;font:inherit;font-size:13px}nav button.on{color:var(--ac);font-weight:700}
 h2,h3{margin:14px 0 8px}h3{font-size:15px;display:flex;align-items:center;gap:8px}i.dot{width:10px;height:10px;border-radius:50%;display:inline-block}
-input,textarea{width:100%;font:inherit;color:var(--tx);background:var(--cd);border:1px solid var(--bd);border-radius:10px;padding:11px;margin:4px 0 12px}
+input,textarea,select{width:100%;font:inherit;color:var(--tx);background:var(--cd);border:1px solid var(--bd);border-radius:10px;padding:11px;margin:4px 0 12px}
 label{display:block;font-size:13px;color:var(--mu)}.ds{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:6px;margin:6px 0 12px}.dc{flex:1;text-align:center;border:1px solid var(--bd);border-radius:10px;padding:8px 0;background:var(--cd);color:var(--tx)}.dc input{display:none}.dc:has(input:checked){background:var(--ac);color:#fff;border-color:var(--ac)}
 .btn,.btn2,.chip{display:block;width:100%;border:0;border-radius:12px;padding:13px;font:inherit;font-weight:600;margin:8px 0;background:var(--ac);color:#fff}.btn2{background:var(--cd);color:var(--tx);border:1px solid var(--bd)}.chip{display:inline-block;width:auto;padding:7px 12px;margin:0 6px 8px 0;font-size:14px;background:var(--cd);color:var(--tx);border:1px solid var(--bd)}.chip.on{background:var(--ac);color:#fff}
 .bar{display:flex;align-items:center;gap:10px;margin-bottom:10px}.bar b{white-space:nowrap}.bar input{margin:0;flex:1;min-width:0}.ic{border:0;background:0;color:var(--tx);font-size:22px;padding:4px 8px}
@@ -16,11 +16,13 @@ label{display:block;font-size:13px;color:var(--mu)}.ds{display:grid;grid-templat
 .big{display:block;width:100%;text-align:left;border:0;border-radius:14px;padding:20px;margin:10px 0;font:inherit;font-size:19px;font-weight:700;color:#fff}.row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--bd)}.mu{color:var(--mu);font-size:14px}
 button,.s,.dc{-webkit-tap-highlight-color:transparent;transition:transform .08s,filter .08s}button:active,.s:active,.dc:active{transform:scale(.96);filter:brightness(.8)}nav button:active{background:var(--bd)}
 .fd{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:1px solid var(--bd);background:var(--cd);color:var(--tx);border-radius:14px;padding:14px;margin:8px 0;font:inherit}.fd span{flex:1}.fd small{display:block;color:var(--mu);font-size:13px}.fd em{font-style:normal;font-size:22px;color:var(--mu)}.ind{margin:0 0 10px 10px}
+.tk{background:var(--cd);border:1px solid var(--bd);border-radius:12px;padding:12px 14px;margin:10px 0}.tb2{display:flex;gap:8px;margin-top:10px}.tb2 button{border:1px solid var(--bd);background:var(--bg);color:var(--tx);border-radius:10px;padding:9px 14px;font:inherit;font-size:14px}.tb2 .sn{background:#111;color:#fff;border-color:#111}
 </style></head><body><div id="sy"></div><div id="m"></div>
 <nav id="tb"><button onclick="home()">Hoy</button><button onclick="go('notas')">Notas</button><button onclick="go('tareas')">Tareas</button><button onclick="go('cfg')">Ajustes</button></nav>
 <script>
 const SB='https://yxvdpqzpiqkkcucdyywt.supabase.co',KEY='sb_publishable_mHsaAjfGkjz3hjptYCbLBA_z2ZD3y7o',LS='nc1',$=s=>document.querySelector(s);
 let S=JSON.parse(localStorage.getItem(LS)||'null')||{courses:[],sessions:[],sync:'1970-01-01T00:00:00Z',auth:null},V='',cur=null,q='',tm,sy;
+S.tasks=S.tasks||[];
 const save=()=>localStorage.setItem(LS,JSON.stringify(S)),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])),
 iso=d=>new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10),today=()=>iso(new Date()),dt=s=>new Date(s+'T12:00:00'),
 addd=(s,n)=>{const d=dt(s);d.setDate(d.getDate()+n);return iso(d)},wd=s=>dt(s).getDay(),fmt=s=>dt(s).toLocaleDateString('es-PE',{weekday:'short',day:'numeric',month:'short'}),
@@ -37,7 +39,7 @@ function render(){const m=$('#m');$('#tb').style.display=(!S.auth||V=='ed'||V=='
  if(V=='pick')m.innerHTML=`<h2>¿Qué curso abres?</h2>`+cur.map(id=>{const c=S.courses.find(x=>x.id==id);return`<button class=big style="background:${c.color}" onclick="openToday('${id}')">${esc(c.name)}</button>`}).join('');
  else if(V=='notas'){m.innerHTML=`<input id=q placeholder="Buscar en todas las notas" value="${esc(q)}" oninput="q=this.value;list()"><div id=ls></div>`;list()}
  else if(V=='ed')ed();
- else if(V=='tareas')m.innerHTML=`<h2>Tareas</h2><p class=mu>Las tareas y sus avisos llegan en la siguiente etapa.</p>`;
+ else if(V=='tareas')tareas();
  else if(V=='editc')editc();
  else if(V=='setup')setup();
  else cfg()}
@@ -51,7 +53,7 @@ function ed(){const s=S.sessions.find(x=>x.id==cur),c=S.courses.find(x=>x.id==s.
  oth=live(S.courses).filter(o=>o.id!=c.id&&o.days.includes(wd(today())));
  $('#m').innerHTML=`<div class=bar><button class=ic onclick="go('notas')">‹</button><b style="color:${c.color}">${esc(c.abbr)}</b><b>SESIÓN ${s.number}</b><input type=date value="${s.date}" onchange="setDate(this.value)"><button class=ic onclick=delS()>🗑</button></div>`+
  (sib.length>1?sib.map(x=>`<button class="chip${x.id==s.id?' on':''}" onclick="go('ed','${x.id}')">S${x.number}</button>`).join('')+'<br>':'')+oth.map(o=>`<button class=chip onclick="openToday('${o.id}')">→ ${esc(o.abbr)}</button>`).join('')+
- `<textarea id=tx placeholder="Escribe aquí…" oninput="typ(this.value)">${esc(s.content)}</textarea><div class=bar2><button onclick="ins('☐ ')">☐</button><button onclick="ins('• ')">•</button><span id=st></span></div>`}
+ `<textarea id=tx placeholder="Escribe aquí…" oninput="typ(this.value)">${esc(s.content)}</textarea><div class=bar2><button onclick="ins('☐ ')">☐</button><button onclick="ins('• ')">•</button><button onclick="tform(null,'${c.id}','${s.id}')">+ Tarea</button><span id=st></span></div>`}
 function typ(v){const s=S.sessions.find(x=>x.id==cur);s.content=v;s._d=1;$('#st').textContent='Guardando…';clearTimeout(tm);tm=setTimeout(()=>{save();$('#st').textContent='Guardado ✓';sched()},400)}
 function ins(t){const x=$('#tx'),p=x.selectionStart,l=x.value.lastIndexOf('\n',p-1)+1;x.value=x.value.slice(0,l)+t+x.value.slice(l);x.selectionStart=x.selectionEnd=p+t.length;x.focus();typ(x.value)}
 function setDate(v){if(!v)return;const s=S.sessions.find(x=>x.id==cur);s.date=v;s._d=1;save();sched();ed()}
@@ -67,15 +69,33 @@ function cfg(){$('#m').innerHTML=`<h2>Cursos</h2>`+live(S.courses).map(c=>`<div 
  `<button class=btn onclick="go('setup')">+ Agregar curso</button><h2>Respaldo</h2><button class=btn2 onclick=exp()>Exportar copia</button><button class=btn2 onclick="$('#fi').click()">Importar copia</button><input id=fi type=file accept=.json hidden onchange=imp(this.files[0])><button class=btn2 onclick=sync()>Sincronizar ahora</button><button class=btn2 onclick=out()>Cerrar sesión</button>`}
 function editc(){const c=S.courses.find(x=>x.id==cur);$('#m').innerHTML=`<h2>Editar curso</h2><label>Nombre<input id=cn value="${esc(c.name)}"></label><label>Abreviatura<input id=ca value="${esc(c.abbr)}"></label><label>Días de clase</label><div class=ds>${DAYS.map(([l,n])=>`<label class=dc><input type=checkbox value=${n}${c.days.includes(n)?' checked':''}>${l}</label>`).join('')}</div><label>Color<input id=cc type=color value="${c.color}" style="height:46px;padding:4px"></label><p class=mu>Cambiar los días afecta solo a las sesiones nuevas; las existentes no se tocan.</p><button class=btn onclick=saveC()>Guardar cambios</button><button class=btn2 onclick="go('cfg')">Cancelar</button>`}
 function saveC(){const c=S.courses.find(x=>x.id==cur),name=$('#cn').value.trim(),abbr=$('#ca').value.trim().toUpperCase(),days=[...document.querySelectorAll('.ds input:checked')].map(i=>+i.value);if(!name||!abbr||!days.length)return alert('Completa nombre, abreviatura y al menos un día.');Object.assign(c,{name,abbr,days,color:$('#cc').value,_d:1});save();sched();go('cfg')}
+const EM=['🟢','🟡','🔴','⚫'],CT=['#10b981','#f59e0b','#ef4444','#000'];let shd=false,te={},tf=null;
+const h12=x=>{const[h,m]=x.split(':'),H=+h;return(H%12||12)+':'+m+(H<12?' a. m.':' p. m.')};
+function tinfo(t){const n=new Date(),dd=Math.round((dt(t.due_date)-dt(today()))/864e5),tm=t.due_time?t.due_time.slice(0,5):'',hm=tm?+tm.slice(0,2)*60+ +tm.slice(3,5):0,
+ over=dd<0||(dd==0&&tm&&n.getHours()*60+n.getMinutes()>hm),lv=over?3:dd>=4?0:dd>=2?1:2;
+ return{lv,over,txt:over?(dd<0?`atrasada ${-dd} ${-dd==1?'día':'días'}`:'atrasada (pasó la hora)'):dd==0?'vence hoy':dd==1?'vence mañana':`faltan ${dd} días`}}
+function tareas(){const L=live(S.tasks),key=t=>t.due_date+(t.due_time||'99'),act=L.filter(t=>!t.done).sort((a,b)=>key(a).localeCompare(key(b))),dn=L.filter(t=>t.done);
+ $('#m').innerHTML=`<h2>Tareas</h2><button class=btn onclick="tform()">+ Nueva tarea</button>`+(act.map(t=>{const i=tinfo(t),c=S.courses.find(x=>x.id==t.course_id);
+ return`<div class=tk style="border-left:6px solid ${CT[i.lv]}"><div>${EM[i.lv]} <b>${esc(c?c.abbr:'—')}</b> · ${esc(t.title)}</div><div class=mu>${fmt(t.due_date)}${t.due_time?' '+h12(t.due_time):''} · ${i.txt}${t.snooze_until&&t.snooze_until>=today()?' · avisos hasta '+fmt(t.snooze_until):''}</div><div class=tb2><button onclick="doneT('${t.id}',1)">Hecha</button>${i.over?`<button class=sn onclick="snz('${t.id}')">Posponer 3 días</button>`:''}<button onclick="tform('${t.id}')">✏️</button></div></div>`}).join('')||'<p class=mu>No tienes tareas pendientes.</p>')+
+ (dn.length?`<h3 onclick="shd=!shd;tareas()">Hechas (${dn.length}) ${shd?'⌄':'›'}</h3>`+(shd?dn.map(t=>`<div class=tk><div>✅ ${esc(t.title)}</div><div class=tb2><button onclick="doneT('${t.id}',0)">Deshacer</button></div></div>`).join(''):''):'')}
+function doneT(id,v){const t=S.tasks.find(x=>x.id==id);t.done=!!v;t._d=1;save();sched();tareas()}
+function snz(id){const t=S.tasks.find(x=>x.id==id),b=t.snooze_until&&t.snooze_until>today()?t.snooze_until:today();t.snooze_until=addd(b,3);t.snoozes=(t.snoozes||0)+1;t._d=1;save();sched();tareas()}
+function tform(id,cid,from){const t=id&&S.tasks.find(x=>x.id==id)||{};te={id:t.id};tf=from||null;$('#tb').style.display='none';const sel=t.course_id||cid||'';
+ $('#m').innerHTML=`<h2>${id?'Editar':'Nueva'} tarea</h2><label>Curso<select id=tc>${live(S.courses).map(c=>`<option value=${c.id}${c.id==sel?' selected':''}>${esc(c.name)}</option>`).join('')}</select></label><label>Tarea<input id=tn value="${esc(t.title||'')}" placeholder="Trabajo 2"></label><label>Fecha de entrega<input id=td type=date value="${t.due_date||''}"></label><label>Hora límite (opcional)<input id=th type=time value="${(t.due_time||'').slice(0,5)}"></label><button class=btn onclick=saveT()>Guardar</button><button class=btn2 onclick=back2()>Cancelar</button>${id?`<button class=btn2 onclick="delT('${id}')">Eliminar</button>`:''}`}
+function back2(){tf?go('ed',tf):go('tareas')}
+function saveT(){const title=$('#tn').value.trim(),c=$('#tc').value,d=$('#td').value,h=$('#th').value;if(!title||!c||!d)return alert('Completa curso, tarea y fecha.');
+ let t=te.id&&S.tasks.find(x=>x.id==te.id);if(!t){t={id:crypto.randomUUID(),done:false,snooze_until:null,snoozes:0,deleted:false};S.tasks.push(t)}
+ Object.assign(t,{course_id:c,title,due_date:d,due_time:h||null,_d:1});save();sched();back2()}
+function delT(id){if(!confirm('¿Eliminar esta tarea?'))return;const t=S.tasks.find(x=>x.id==id);t.deleted=true;t._d=1;save();sched();back2()}
 function delC(id){if(!confirm('¿Eliminar este curso y sus sesiones?'))return;const c=S.courses.find(x=>x.id==id);c.deleted=true;c._d=1;S.sessions.filter(s=>s.course_id==id).forEach(s=>{s.deleted=true;s._d=1});save();sched();cfg()}
-function exp(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({courses:S.courses,sessions:S.sessions})],{type:'application/json'}));a.download='notas-'+today()+'.json';a.click()}
-function imp(f){if(!f)return;f.text().then(t=>{const j=JSON.parse(t);S.courses=j.courses.map(x=>({...x,_d:1}));S.sessions=j.sessions.map(x=>({...x,_d:1}));save();sched();home()}).catch(()=>alert('Archivo no válido'))}
+function exp(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({courses:S.courses,sessions:S.sessions,tasks:S.tasks})],{type:'application/json'}));a.download='notas-'+today()+'.json';a.click()}
+function imp(f){if(!f)return;f.text().then(t=>{const j=JSON.parse(t);S.courses=j.courses.map(x=>({...x,_d:1}));S.sessions=j.sessions.map(x=>({...x,_d:1}));S.tasks=(j.tasks||[]).map(x=>({...x,_d:1}));save();sched();home()}).catch(()=>alert('Archivo no válido'))}
 function out(){if(confirm('¿Cerrar sesión? Tus notas siguen en este celular.')){S.auth=null;save();render()}}
 async function doLogin(){try{const r=await fetch(SB+'/auth/v1/token?grant_type=password',{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({email:$('#em').value.trim(),password:$('#pw').value})}),j=await r.json();if(!r.ok)throw j.msg||j.error_description||'Error';
  S.auth={access:j.access_token,refresh:j.refresh_token,exp:Date.now()+j.expires_in*1000};save();boot()}catch(e){$('#er').textContent='No se pudo entrar: '+e}}
 async function tok(){const a=S.auth;if(!a)return null;if(a.exp-Date.now()>6e4)return a.access;const r=await fetch(SB+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:a.refresh})});if(!r.ok)return null;const j=await r.json();S.auth={access:j.access_token,refresh:j.refresh_token,exp:Date.now()+j.expires_in*1000};save();return S.auth.access}
 async function api(p,o={}){const t=await tok();if(!t)throw 0;return fetch(SB+'/rest/v1/'+p,{...o,headers:{apikey:KEY,Authorization:'Bearer '+t,'Content-Type':'application/json',...(o.headers||{})}})}
-const COLS={courses:['id','name','abbr','color','days','sort','deleted'],sessions:['id','course_id','number','date','content','deleted']};
+const COLS={courses:['id','name','abbr','color','days','sort','deleted'],sessions:['id','course_id','number','date','content','deleted'],tasks:['id','course_id','title','due_date','due_time','done','snooze_until','snoozes','deleted']};
 function sched(){clearTimeout(sy);sy=setTimeout(sync,3000)}
 async function sync(){if(!navigator.onLine||!S.auth)return;try{for(const T in COLS){const d=S[T].filter(x=>x._d);if(!d.length)continue;d.forEach(x=>x._d=0);
  const r=await api(T+'?on_conflict=id',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(d.map(x=>Object.fromEntries(COLS[T].map(k=>[k,x[k]]))))});if(!r.ok){d.forEach(x=>x._d=1);throw 1}}
