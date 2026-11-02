@@ -31,13 +31,14 @@ function gen(){S.courses.forEach(c=>{if(c.deleted)return;const all=S.sessions.fi
 function go(v,x){V=v;cur=x;render()}
 function home(){const t=today(),cs=live(S.courses).filter(c=>c.days.includes(wd(t)));if(!cs.length)return go('tareas');if(cs.length==1)return openToday(cs[0].id);go('pick',cs.map(c=>c.id))}
 function openToday(id){const l=live(S.sessions).filter(s=>s.course_id==id).sort((a,b)=>b.number-a.number),s=l.find(s=>s.date==today())||l[0];s?go('ed',s.id):go('notas')}
-function render(){const m=$('#m');$('#tb').style.display=(!S.auth||V=='ed'||V=='setup')?'none':'flex';
+function render(){const m=$('#m');$('#tb').style.display=(!S.auth||V=='ed'||V=='setup'||V=='editc')?'none':'flex';
  document.querySelectorAll('nav button').forEach((b,i)=>b.classList.toggle('on',['','notas','tareas','cfg'][i]==V));
  if(!S.auth){m.innerHTML=`<h2>Notas de clase</h2><p class=mu>Inicia sesión una sola vez.</p><label>Correo<input id=em type=email autocomplete=username></label><label>Contraseña<input id=pw type=password autocomplete=current-password></label><button class=btn onclick=doLogin()>Entrar</button><p id=er class=mu></p>`;return}
  if(V=='pick')m.innerHTML=`<h2>¿Qué curso abres?</h2>`+cur.map(id=>{const c=S.courses.find(x=>x.id==id);return`<button class=big style="background:${c.color}" onclick="openToday('${id}')">${esc(c.name)}</button>`}).join('');
  else if(V=='notas'){m.innerHTML=`<input id=q placeholder="Buscar en todas las notas" value="${esc(q)}" oninput="q=this.value;list()"><div id=ls></div>`;list()}
  else if(V=='ed')ed();
  else if(V=='tareas')m.innerHTML=`<h2>Tareas</h2><p class=mu>Las tareas y sus avisos llegan en la siguiente etapa.</p>`;
+ else if(V=='editc')editc();
  else if(V=='setup')setup();
  else cfg()}
 let open=new Set();function tog(id){open.has(id)?open.delete(id):open.add(id);list()}
@@ -62,8 +63,10 @@ function addC(){const name=$('#cn').value.trim(),abbr=$('#ca').value.trim().toUp
  const c={id:crypto.randomUUID(),name,abbr,color:COL[S.courses.length%COL.length],days,sort:S.courses.length,deleted:false,_d:1};S.courses.push(c);
  let x=d;for(let k=n;k>=1;k--){S.sessions.push({id:crypto.randomUUID(),course_id:c.id,number:k,date:x,content:'',deleted:false,_d:1});x=step(c,x,-1)||addd(x,-7)}
  gen();save();sched();go('cfg')}
-function cfg(){$('#m').innerHTML=`<h2>Cursos</h2>`+live(S.courses).map(c=>`<div class=row><span><i class=dot style="background:${c.color}"></i> ${esc(c.abbr)} <span class=mu>${c.days.map(d=>['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'][d]).join(' ')}</span></span><button class=ic onclick="delC('${c.id}')">🗑</button></div>`).join('')+
+function cfg(){$('#m').innerHTML=`<h2>Cursos</h2>`+live(S.courses).map(c=>`<div class=row><span><i class=dot style="background:${c.color}"></i> ${esc(c.abbr)} <span class=mu>${c.days.map(d=>['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'][d]).join(' ')}</span></span><span><button class=ic onclick="go('editc','${c.id}')">✏️</button><button class=ic onclick="delC('${c.id}')">🗑</button></span></div>`).join('')+
  `<button class=btn onclick="go('setup')">+ Agregar curso</button><h2>Respaldo</h2><button class=btn2 onclick=exp()>Exportar copia</button><button class=btn2 onclick="$('#fi').click()">Importar copia</button><input id=fi type=file accept=.json hidden onchange=imp(this.files[0])><button class=btn2 onclick=sync()>Sincronizar ahora</button><button class=btn2 onclick=out()>Cerrar sesión</button>`}
+function editc(){const c=S.courses.find(x=>x.id==cur);$('#m').innerHTML=`<h2>Editar curso</h2><label>Nombre<input id=cn value="${esc(c.name)}"></label><label>Abreviatura<input id=ca value="${esc(c.abbr)}"></label><label>Días de clase</label><div class=ds>${DAYS.map(([l,n])=>`<label class=dc><input type=checkbox value=${n}${c.days.includes(n)?' checked':''}>${l}</label>`).join('')}</div><label>Color<input id=cc type=color value="${c.color}" style="height:46px;padding:4px"></label><p class=mu>Cambiar los días afecta solo a las sesiones nuevas; las existentes no se tocan.</p><button class=btn onclick=saveC()>Guardar cambios</button><button class=btn2 onclick="go('cfg')">Cancelar</button>`}
+function saveC(){const c=S.courses.find(x=>x.id==cur),name=$('#cn').value.trim(),abbr=$('#ca').value.trim().toUpperCase(),days=[...document.querySelectorAll('.ds input:checked')].map(i=>+i.value);if(!name||!abbr||!days.length)return alert('Completa nombre, abreviatura y al menos un día.');Object.assign(c,{name,abbr,days,color:$('#cc').value,_d:1});save();sched();go('cfg')}
 function delC(id){if(!confirm('¿Eliminar este curso y sus sesiones?'))return;const c=S.courses.find(x=>x.id==id);c.deleted=true;c._d=1;S.sessions.filter(s=>s.course_id==id).forEach(s=>{s.deleted=true;s._d=1});save();sched();cfg()}
 function exp(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({courses:S.courses,sessions:S.sessions})],{type:'application/json'}));a.download='notas-'+today()+'.json';a.click()}
 function imp(f){if(!f)return;f.text().then(t=>{const j=JSON.parse(t);S.courses=j.courses.map(x=>({...x,_d:1}));S.sessions=j.sessions.map(x=>({...x,_d:1}));save();sched();home()}).catch(()=>alert('Archivo no válido'))}
