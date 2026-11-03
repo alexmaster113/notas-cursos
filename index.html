@@ -73,7 +73,9 @@ function saveC(){const c=S.courses.find(x=>x.id==cur),name=$('#cn').value.trim()
  const ls=live(S.sessions).filter(x=>x.course_id==c.id),mx=Math.max(0,...ls.map(x=>x.number)),n=+($('#cs')?$('#cs').value:mx),dl=ls.length&&n>=1?n-mx:0;
  if(ls.some(x=>x.number+dl<1&&x.content.trim()))return alert('Algunas sesiones con notas quedarían con número menor que 1. Pon un número mayor.');
  ls.forEach(x=>{if(dl){x.number+=dl;x._d=1}if(x.number<1){x.deleted=true;x._d=1}});
- Object.assign(c,{name,abbr,days,color:$('#cc').value,_d:1});save();sched();go('cfg')}
+ Object.assign(c,{name,abbr,days,color:$('#cc').value,_d:1});
+ const ev=live(S.sessions).filter(x=>x.course_id==c.id);if(ev.length){const f=ev.reduce((p,q)=>p.number<=q.number?p:q);let k=f.number-1,d=f.date;while(k>=1){d=step(c,d,-1)||addd(d,-7);S.sessions.push({id:crypto.randomUUID(),course_id:c.id,number:k--,date:d,content:'',deleted:false,_d:1})}}
+ save();sched();go('cfg')}
 function delC(id){if(!confirm('¿Eliminar este curso y sus sesiones?'))return;const c=S.courses.find(x=>x.id==id);c.deleted=true;c._d=1;S.sessions.filter(s=>s.course_id==id).forEach(s=>{s.deleted=true;s._d=1});save();sched();cfg()}
 function exp(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({courses:S.courses,sessions:S.sessions,tasks:S.tasks})],{type:'application/json'}));a.download='notas-'+today()+'.json';a.click()}
 function imp(f){if(!f)return;f.text().then(t=>{const j=JSON.parse(t);S.courses=j.courses.map(x=>({...x,_d:1}));S.sessions=j.sessions.map(x=>({...x,_d:1}));S.tasks=(j.tasks||[]).map(x=>({...x,_d:1}));save();sched();home()}).catch(()=>alert('Archivo no válido'))}
