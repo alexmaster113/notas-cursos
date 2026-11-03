@@ -22,36 +22,38 @@ button,.s,.dc{-webkit-tap-highlight-color:transparent;transition:transform .08s,
 <script>
 const SB='https://osudiqbwszutfoezqkca.supabase.co',KEY='sb_publishable_hOVWQx9y_AcJjx6ur0o39A__YrNerph',LS='nc1',$=s=>document.querySelector(s);
 let S=JSON.parse(localStorage.getItem(LS)||'null')||{courses:[],sessions:[],sync:'1970-01-01T00:00:00Z',auth:null},V='',cur=null,q='',tm,sy;
-S.tasks=S.tasks||[];
-if(S.sb!==SB){S.sb=SB;S.sync='1970-01-01T00:00:00Z';S.auth=null;[S.courses,S.sessions,S.tasks].forEach(a=>a.forEach(x=>x._d=1))}
+S.tasks=S.tasks||[];S.cycles=S.cycles||[];
+if(S.sb!==SB){S.sb=SB;S.sync='1970-01-01T00:00:00Z';S.auth=null;[S.cycles,S.courses,S.sessions,S.tasks].forEach(a=>a.forEach(x=>x._d=1))}
 const save=()=>localStorage.setItem(LS,JSON.stringify(S)),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])),
 iso=d=>new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10),today=()=>iso(new Date()),dt=s=>new Date(s+'T12:00:00'),
 addd=(s,n)=>{const d=dt(s);d.setDate(d.getDate()+n);return iso(d)},wd=s=>dt(s).getDay(),fmt=s=>dt(s).toLocaleDateString('es-PE',{weekday:'short',day:'numeric',month:'short'}),
 live=a=>a.filter(x=>!x.deleted),status=t=>{$('#sy').textContent=t};
 function step(c,s,k){for(let i=1;i<15;i++){const d=addd(s,i*k);if(c.days.includes(wd(d)))return d}}
-function gen(){S.courses.forEach(c=>{if(c.deleted)return;const all=S.sessions.filter(s=>s.course_id==c.id);if(!all.length)return;let n=Math.max(0,...live(all).map(s=>s.number)),d=all.map(s=>s.date).sort().pop();
+function gen(){S.courses.forEach(c=>{if(c.deleted||c.cycle_id)return;const all=S.sessions.filter(s=>s.course_id==c.id);if(!all.length)return;let n=Math.max(0,...live(all).map(s=>s.number)),d=all.map(s=>s.date).sort().pop();
  for(let x=step(c,d,1);x&&x<=today();x=step(c,x,1)){S.sessions.push({id:crypto.randomUUID(),course_id:c.id,number:++n,date:x,content:'',deleted:false,_d:1})}});save()}
+let ACY=null;const cur0=()=>live(S.courses).filter(c=>!c.cycle_id),ccy=()=>live(S.courses).filter(c=>ACY?c.cycle_id==ACY:!c.cycle_id);
 function go(v,x){V=v;cur=x;render()}
-function home(){const t=today(),cs=live(S.courses).filter(c=>c.days.includes(wd(t)));if(!cs.length)return go('tareas');if(cs.length==1)return openToday(cs[0].id);go('pick',cs.map(c=>c.id))}
+function home(){const t=today(),cs=cur0().filter(c=>c.days.includes(wd(t)));if(!cs.length)return go('tareas');if(cs.length==1)return openToday(cs[0].id);go('pick',cs.map(c=>c.id))}
 function openToday(id){const l=live(S.sessions).filter(s=>s.course_id==id).sort((a,b)=>b.number-a.number),s=l.find(s=>s.date==today())||l[0];s?go('ed',s.id):go('notas')}
-function render(){const m=$('#m');$('#tb').style.display=(!S.auth||V=='ed'||V=='setup'||V=='editc')?'none':'flex';
+function render(){const m=$('#m');if(V!='notas'&&V!='ed')ACY=null;$('#tb').style.display=(!S.auth||V=='ed'||V=='setup'||V=='editc')?'none':'flex';
  document.querySelectorAll('nav button').forEach((b,i)=>b.classList.toggle('on',['','notas','tareas','cfg'][i]==V));
  if(!S.auth){m.innerHTML=`<h2>Notas de clase</h2><p class=mu>Inicia sesión una sola vez.</p><label>Correo<input id=em type=email autocomplete=username></label><label>Contraseña<input id=pw type=password autocomplete=current-password></label><button class=btn onclick=doLogin()>Entrar</button><p id=er class=mu></p>`;return}
  if(V=='pick')m.innerHTML=`<h2>¿Qué curso abres?</h2>`+cur.map(id=>{const c=S.courses.find(x=>x.id==id);return`<button class=big style="background:${c.color}" onclick="openToday('${id}')">${esc(c.name)}</button>`}).join('');
- else if(V=='notas'){m.innerHTML=`<input id=q placeholder="Buscar en todas las notas" value="${esc(q)}" oninput="q=this.value;list()"><div id=ls></div>`;list()}
+ else if(V=='notas'){m.innerHTML=(ACY?`<div class=tk>📦 ${esc((S.cycles.find(y=>y.id==ACY)||{}).name)} · archivado<button class=btn2 onclick="ACY=null;go('notas')">Volver al ciclo actual</button></div>`:'')+`<input id=q placeholder="Buscar en todas las notas" value="${esc(q)}" oninput="q=this.value;list()"><div id=ls></div>`;list()}
  else if(V=='ed')ed();
  else if(V=='tareas')tareas();
  else if(V=='editc')editc();
+ else if(V=='papel')papel();
  else if(V=='setup')setup();
  else cfg()}
 let open=new Set();function tog(id){open.has(id)?open.delete(id):open.add(id);list()}
-function list(){const t=q.toLowerCase();let h='';live(S.courses).forEach(c=>{const all=live(S.sessions).filter(s=>s.course_id==c.id),l=all.filter(s=>!t||s.content.toLowerCase().includes(t)).sort((a,b)=>b.number-a.number);if(t&&!l.length)return;const o=t||open.has(c.id);
+function list(){const t=q.toLowerCase();let h='';ccy().forEach(c=>{const all=live(S.sessions).filter(s=>s.course_id==c.id),l=all.filter(s=>!t||s.content.toLowerCase().includes(t)).sort((a,b)=>b.number-a.number);if(t&&!l.length)return;const o=t||open.has(c.id);
  h+=`<button class=fd onclick="tog('${c.id}')"><i class=dot style="background:${c.color}"></i><span><b>${esc(c.name)}</b><small>${esc(c.abbr)} · ${all.length} sesiones</small></span><em>${o?'⌄':'›'}</em></button>`;
  if(o){const gs=[];l.forEach(s=>{const g=gs[gs.length-1];g&&g[0].date==s.date?g.push(s):gs.push([s])});h+='<div class=ind>';
  gs.forEach(g=>{h+=`<div class="g${g.length>1?' m':''}">`+g.map(s=>`<div class=s onclick="go('ed','${s.id}')"><div><b>SESIÓN ${s.number}</b><span>${fmt(s.date)}</span></div><p>${esc(s.content.split('\n')[0]||'(vacía)')}</p></div>`).join('')+`</div>`});h+='</div>'}});
  $('#ls').innerHTML=h||'<p class=mu>No hay notas que mostrar.</p>'}
 function ed(){const s=S.sessions.find(x=>x.id==cur),c=S.courses.find(x=>x.id==s.course_id),sib=live(S.sessions).filter(x=>x.course_id==c.id&&x.date==s.date).sort((a,b)=>a.number-b.number),
- oth=live(S.courses).filter(o=>o.id!=c.id&&o.days.includes(wd(today())));
+ oth=cur0().filter(o=>o.id!=c.id&&o.days.includes(wd(today())));
  $('#m').innerHTML=`<div class=bar><button class=ic onclick="go('notas')">‹</button><b style="color:${c.color}">${esc(c.abbr)}</b><b>SESIÓN ${s.number}</b><input type=date value="${s.date}" onchange="setDate(this.value)"><button class=ic onclick=delS()>🗑</button></div>`+
  (sib.length>1?sib.map(x=>`<button class="chip${x.id==s.id?' on':''}" onclick="go('ed','${x.id}')">S${x.number}</button>`).join('')+'<br>':'')+oth.map(o=>`<button class=chip onclick="openToday('${o.id}')">→ ${esc(o.abbr)}</button>`).join('')+
  `<textarea id=tx placeholder="Escribe aquí…" oninput="typ(this.value)">${esc(s.content)}</textarea><div class=bar2><button onclick="ins('☐ ')">☐</button><button onclick="ins('• ')">•</button><button onclick="tform(null,'${c.id}','${s.id}')">+ Tarea</button><span id=st></span></div>`}
@@ -66,8 +68,8 @@ function addC(){const name=$('#cn').value.trim(),abbr=$('#ca').value.trim().toUp
  const c={id:crypto.randomUUID(),name,abbr,color:COL[S.courses.length%COL.length],days,sort:S.courses.length,deleted:false,_d:1};S.courses.push(c);
  let x=d;for(let k=n;k>=1;k--){S.sessions.push({id:crypto.randomUUID(),course_id:c.id,number:k,date:x,content:'',deleted:false,_d:1});x=step(c,x,-1)||addd(x,-7)}
  gen();save();sched();go('cfg')}
-function cfg(){$('#m').innerHTML=`<h2>Cursos</h2>`+live(S.courses).map(c=>`<div class=row><span><i class=dot style="background:${c.color}"></i> ${esc(c.abbr)} <span class=mu>${c.days.map(d=>['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'][d]).join(' ')}</span></span><span><button class=ic onclick="go('editc','${c.id}')">✏️</button><button class=ic onclick="delC('${c.id}')">🗑</button></span></div>`).join('')+
- `<button class=btn onclick="go('setup')">+ Agregar curso</button><h2>Respaldo</h2><button class=btn2 onclick=exp()>Exportar copia</button><button class=btn2 onclick="$('#fi').click()">Importar copia</button><input id=fi type=file accept=.json hidden onchange=imp(this.files[0])><button class=btn2 onclick=sync()>Sincronizar ahora</button><h2>Avisos</h2><button class=btn onclick=avisos()>Activar avisos</button><button class=btn2 onclick=prueba()>Enviar aviso de prueba</button><button class=btn2 onclick=out()>Cerrar sesión</button>`}
+function cfg(){$('#m').innerHTML=`<h2>Cursos</h2>`+cur0().map(c=>`<div class=row><span><i class=dot style="background:${c.color}"></i> ${esc(c.abbr)} <span class=mu>${c.days.map(d=>['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'][d]).join(' ')}</span></span><span><button class=ic onclick="go('editc','${c.id}')">✏️</button><button class=ic onclick="delC('${c.id}')">🗑</button></span></div>`).join('')+
+ `<button class=btn onclick="go('setup')">+ Agregar curso</button><h2>Respaldo</h2><button class=btn2 onclick=exp()>Exportar copia</button><button class=btn2 onclick="$('#fi').click()">Importar copia</button><input id=fi type=file accept=.json hidden onchange=imp(this.files[0])><button class=btn2 onclick=sync()>Sincronizar ahora</button><h2>Ciclos</h2><button class=btn2 onclick=nuevoC()>Nuevo ciclo</button>${S.cycles.filter(y=>!y.deleted).map(y=>`<button class=btn2 onclick="ACY='${y.id}';go('notas')">📦 ${esc(y.name)}</button>`).join('')}<button class=btn2 onclick="go('papel')">Papelera</button><h2>Avisos</h2><button class=btn onclick=avisos()>Activar avisos</button><button class=btn2 onclick=prueba()>Enviar aviso de prueba</button><button class=btn2 onclick=out()>Cerrar sesión</button>`}
 function editc(){const c=S.courses.find(x=>x.id==cur),ls=live(S.sessions).filter(x=>x.course_id==c.id);$('#m').innerHTML=`<h2>Editar curso</h2><label>Nombre<input id=cn value="${esc(c.name)}"></label><label>Abreviatura<input id=ca value="${esc(c.abbr)}"></label><label>Días de clase</label><div class=ds>${DAYS.map(([l,n])=>`<label class=dc><input type=checkbox value=${n}${c.days.includes(n)?' checked':''}>${l}</label>`).join('')}</div><label>Color<input id=cc type=color value="${c.color}" style="height:46px;padding:4px"></label>${ls.length?`<label>Número de la última sesión<input id=cs type=number min=1 value="${Math.max(...ls.map(x=>x.number))}"></label><p class=mu>Si lo cambias, todas las sesiones de este curso se renumeran. Ej.: si hoy debería ser la 8 y la app dice 9, ponlo en 8.</p>`:''}<p class=mu>Cambiar los días afecta solo a las sesiones nuevas; las existentes no se tocan.</p><button class=btn onclick=saveC()>Guardar cambios</button><button class=btn2 onclick="go('cfg')">Cancelar</button>`}
 function saveC(){const c=S.courses.find(x=>x.id==cur),name=$('#cn').value.trim(),abbr=$('#ca').value.trim().toUpperCase(),days=[...document.querySelectorAll('.ds input:checked')].map(i=>+i.value);if(!name||!abbr||!days.length)return alert('Completa nombre, abreviatura y al menos un día.');
  const ls=live(S.sessions).filter(x=>x.course_id==c.id),mx=Math.max(0,...ls.map(x=>x.number)),n=+($('#cs')?$('#cs').value:mx),dl=ls.length&&n>=1?n-mx:0;
@@ -76,21 +78,44 @@ function saveC(){const c=S.courses.find(x=>x.id==cur),name=$('#cn').value.trim()
  Object.assign(c,{name,abbr,days,color:$('#cc').value,_d:1});
  const ev=live(S.sessions).filter(x=>x.course_id==c.id);if(ev.length){const f=ev.reduce((p,q)=>p.number<=q.number?p:q);let k=f.number-1,d=f.date;while(k>=1){d=step(c,d,-1)||addd(d,-7);S.sessions.push({id:crypto.randomUUID(),course_id:c.id,number:k--,date:d,content:'',deleted:false,_d:1})}}
  save();sched();go('cfg')}
+const EM=['🟢','🟡','🔴','⚫'],CT=['#10b981','#f59e0b','#ef4444','#000'];let shd=false,te={},tf=null;
+const h12=x=>{const[h,m]=x.split(':'),H=+h;return(H%12||12)+':'+m+(H<12?' a. m.':' p. m.')};
+function tinfo(t){const n=new Date(),dd=Math.round((dt(t.due_date)-dt(today()))/864e5),tm=t.due_time?t.due_time.slice(0,5):'',hm=tm?+tm.slice(0,2)*60+ +tm.slice(3,5):0,
+ over=dd<0||(dd==0&&tm&&n.getHours()*60+n.getMinutes()>hm),lv=over?3:dd>=4?0:dd>=2?1:2;
+ return{lv,over,txt:over?(dd<0?`atrasada ${-dd} ${-dd==1?'día':'días'}`:'atrasada (pasó la hora)'):dd==0?'vence hoy':dd==1?'vence mañana':`faltan ${dd} días`}}
+function tareas(){const L=live(S.tasks).filter(t=>{const c=S.courses.find(x=>x.id==t.course_id);return!(c&&c.cycle_id)}),key=t=>t.due_date+(t.due_time||'99'),act=L.filter(t=>!t.done).sort((a,b)=>key(a).localeCompare(key(b))),dn=L.filter(t=>t.done);
+ $('#m').innerHTML=`<h2>Tareas</h2><button class=btn onclick="tform()">+ Nueva tarea</button>`+(act.map(t=>{const i=tinfo(t),c=S.courses.find(x=>x.id==t.course_id);
+ return`<div class=tk style="border-left:6px solid ${CT[i.lv]}"><div>${EM[i.lv]} <b>${esc(c?c.abbr:'—')}</b> · ${esc(t.title)}</div><div class=mu>${fmt(t.due_date)}${t.due_time?' '+h12(t.due_time):''} · ${i.txt}${t.snooze_until&&t.snooze_until>=today()?' · avisos hasta '+fmt(t.snooze_until):''}</div><div class=tb2><button onclick="doneT('${t.id}',1)">Hecha</button>${i.over?`<button class=sn onclick="snz('${t.id}')">Posponer 3 días</button>`:''}<button onclick="tform('${t.id}')">✏️</button></div></div>`}).join('')||'<p class=mu>No tienes tareas pendientes.</p>')+
+ (dn.length?`<h3 onclick="shd=!shd;tareas()">Hechas (${dn.length}) ${shd?'⌄':'›'}</h3>`+(shd?dn.map(t=>`<div class=tk><div>✅ ${esc(t.title)}</div><div class=tb2><button onclick="doneT('${t.id}',0)">Deshacer</button></div></div>`).join(''):''):'')}
+function doneT(id,v){const t=S.tasks.find(x=>x.id==id);t.done=!!v;t._d=1;save();sched();tareas()}
+function snz(id){const t=S.tasks.find(x=>x.id==id),b=t.snooze_until&&t.snooze_until>today()?t.snooze_until:today();t.snooze_until=addd(b,3);t.snoozes=(t.snoozes||0)+1;t._d=1;save();sched();tareas()}
+function tform(id,cid,from){const t=id&&S.tasks.find(x=>x.id==id)||{};te={id:t.id};tf=from||null;$('#tb').style.display='none';const sel=t.course_id||cid||'';
+ $('#m').innerHTML=`<h2>${id?'Editar':'Nueva'} tarea</h2><label>Curso<select id=tc>${cur0().map(c=>`<option value=${c.id}${c.id==sel?' selected':''}>${esc(c.name)}</option>`).join('')}</select></label><label>Tarea<input id=tn value="${esc(t.title||'')}" placeholder="Trabajo 2"></label><label>Fecha de entrega<input id=td type=date value="${t.due_date||''}"></label><label>Hora límite (opcional)<input id=th type=time value="${(t.due_time||'').slice(0,5)}"></label><button class=btn onclick=saveT()>Guardar</button><button class=btn2 onclick=back2()>Cancelar</button>${id?`<button class=btn2 onclick="delT('${id}')">Eliminar</button>`:''}`}
+function back2(){tf?go('ed',tf):go('tareas')}
+function saveT(){const title=$('#tn').value.trim(),c=$('#tc').value,d=$('#td').value,h=$('#th').value;if(!title||!c||!d)return alert('Completa curso, tarea y fecha.');
+ let t=te.id&&S.tasks.find(x=>x.id==te.id);if(!t){t={id:crypto.randomUUID(),done:false,snooze_until:null,snoozes:0,deleted:false};S.tasks.push(t)}
+ Object.assign(t,{course_id:c,title,due_date:d,due_time:h||null,_d:1});save();sched();back2()}
+function delT(id){if(!confirm('¿Eliminar esta tarea?'))return;const t=S.tasks.find(x=>x.id==id);t.deleted=true;t._d=1;save();sched();back2()}
+function nuevoC(){if(!confirm('Se archivarán tus cursos, notas y tareas actuales. No se borra nada. ¿Continuar?'))return;const n=prompt('Nombre del ciclo que termina (ej. 2026-II):');if(!n)return;const id=crypto.randomUUID();S.cycles.push({id,name:n.trim(),archived:true,deleted:false,_d:1});cur0().forEach(c=>{c.cycle_id=id;c._d=1});save();sched();go('setup')}
+function rest(T,id){const x=S[T].find(y=>y.id==id);x.deleted=false;x._d=1;save();sched();papel()}
+function papel(){const ss=S.sessions.filter(x=>x.deleted&&S.courses.some(c=>c.id==x.course_id&&!c.deleted)).sort((a,b)=>b.date.localeCompare(a.date)),tk=S.tasks.filter(t=>t.deleted),b=(T,id)=>`<button class=btn2 style="width:auto;margin:0" onclick="rest('${T}','${id}')">Restaurar</button>`;
+ const h=ss.map(x=>{const c=S.courses.find(y=>y.id==x.course_id);return`<div class=row><span>${esc(c.abbr)} · SESIÓN ${x.number} <span class=mu>${fmt(x.date)}</span></span>${b('sessions',x.id)}</div>`}).join('')+tk.map(t=>`<div class=row><span>Tarea: ${esc(t.title)}</span>${b('tasks',t.id)}</div>`).join('');
+ $('#m').innerHTML=`<div class=bar><button class=ic onclick="go('cfg')">‹</button><h2 style="margin:0">Papelera</h2></div>`+(h||'<p class=mu>La papelera está vacía.</p>')}
 function delC(id){if(!confirm('¿Eliminar este curso y sus sesiones?'))return;const c=S.courses.find(x=>x.id==id);c.deleted=true;c._d=1;S.sessions.filter(s=>s.course_id==id).forEach(s=>{s.deleted=true;s._d=1});save();sched();cfg()}
-function exp(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({courses:S.courses,sessions:S.sessions,tasks:S.tasks})],{type:'application/json'}));a.download='notas-'+today()+'.json';a.click()}
-function imp(f){if(!f)return;f.text().then(t=>{const j=JSON.parse(t);S.courses=j.courses.map(x=>({...x,_d:1}));S.sessions=j.sessions.map(x=>({...x,_d:1}));S.tasks=(j.tasks||[]).map(x=>({...x,_d:1}));save();sched();home()}).catch(()=>alert('Archivo no válido'))}
+function exp(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({cycles:S.cycles,courses:S.courses,sessions:S.sessions,tasks:S.tasks})],{type:'application/json'}));a.download='notas-'+today()+'.json';a.click()}
+function imp(f){if(!f)return;f.text().then(t=>{const j=JSON.parse(t);S.courses=j.courses.map(x=>({...x,_d:1}));S.sessions=j.sessions.map(x=>({...x,_d:1}));S.tasks=(j.tasks||[]).map(x=>({...x,_d:1}));S.cycles=(j.cycles||[]).map(x=>({...x,_d:1}));save();sched();home()}).catch(()=>alert('Archivo no válido'))}
 function out(){if(confirm('¿Cerrar sesión? Tus notas siguen en este celular.')){S.auth=null;save();render()}}
 async function doLogin(){try{const r=await fetch(SB+'/auth/v1/token?grant_type=password',{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({email:$('#em').value.trim(),password:$('#pw').value})}),j=await r.json();if(!r.ok)throw j.msg||j.error_description||'Error';
  S.auth={access:j.access_token,refresh:j.refresh_token,exp:Date.now()+j.expires_in*1000};save();boot()}catch(e){$('#er').textContent='No se pudo entrar: '+e}}
 async function tok(){const a=S.auth;if(!a)return null;if(a.exp-Date.now()>6e4)return a.access;const r=await fetch(SB+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:a.refresh})});if(!r.ok)return null;const j=await r.json();S.auth={access:j.access_token,refresh:j.refresh_token,exp:Date.now()+j.expires_in*1000};save();return S.auth.access}
 async function api(p,o={}){const t=await tok();if(!t)throw 0;return fetch(SB+'/rest/v1/'+p,{...o,headers:{apikey:KEY,Authorization:'Bearer '+t,'Content-Type':'application/json',...(o.headers||{})}})}
-const COLS={courses:['id','name','abbr','color','days','sort','deleted'],sessions:['id','course_id','number','date','content','deleted'],tasks:['id','course_id','title','due_date','due_time','done','snooze_until','snoozes','deleted']};
+const COLS={cycles:['id','name','archived','deleted'],courses:['id','name','abbr','color','days','sort','deleted','cycle_id'],sessions:['id','course_id','number','date','content','deleted'],tasks:['id','course_id','title','due_date','due_time','done','snooze_until','snoozes','deleted']};
 function sched(){clearTimeout(sy);sy=setTimeout(sync,3000)}
 async function sync(){if(!navigator.onLine||!S.auth)return;try{for(const T in COLS){const d=S[T].filter(x=>x._d);if(!d.length)continue;d.forEach(x=>x._d=0);
  const r=await api(T+'?on_conflict=id',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(d.map(x=>Object.fromEntries(COLS[T].map(k=>[k,x[k]]))))});if(!r.ok){d.forEach(x=>x._d=1);throw 1}}
  for(const T in COLS){const r=await api(T+'?select=*&order=updated_at.asc&updated_at=gt.'+encodeURIComponent(S.sync));if(!r.ok)throw 1;(await r.json()).forEach(w=>{const i=S[T].findIndex(x=>x.id==w.id);if(i<0)S[T].push(w);else if(!S[T][i]._d)S[T][i]=w;if(w.updated_at>S.sync)S.sync=w.updated_at})}
  save();status('Sincronizado ✓')}catch(e){status('Sin sincronizar')}}
-async function boot(){if(!S.auth)return render();if(!live(S.courses).length)await Promise.race([sync(),new Promise(r=>setTimeout(r,4000))]);else sync();gen();live(S.courses).length?(location.hash=='#tareas'?go('tareas'):home()):go('setup')}
+async function boot(){if(!S.auth)return render();if(!cur0().length)await Promise.race([sync(),new Promise(r=>setTimeout(r,4000))]);else sync();gen();cur0().length?(location.hash=='#tareas'?go('tareas'):home()):go('setup')}
 addEventListener('pagehide',save);addEventListener('online',sync);document.addEventListener('visibilitychange',()=>{if(document.hidden){save();sync()}});
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js');
 async function fn(a,x={}){const t=await tok();if(!t)throw 'inicia sesión primero';const r=await fetch(SB+'/functions/v1/push',{method:'POST',headers:{Authorization:'Bearer '+t,'Content-Type':'application/json',apikey:KEY},body:JSON.stringify({action:a,...x})});if(!r.ok)throw 'error '+r.status;return r.json()}
