@@ -25,3 +25,6 @@ async function avisos(){try{if(!('Notification'in window)||!('PushManager'in win
  if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:k});
  await fn('subscribe',{sub:sub.toJSON()});toast('Avisos activados ✓')}catch(e){toast('No se pudo activar: '+e,null,'err')}}
 async function prueba(){try{const r=await fn('test');r.sent?toast('Aviso enviado ✓ Llegará en unos segundos'):info('Sin celular registrado','Toca “Activar avisos” primero.')}catch(e){toast('Error: '+e,null,'err')}}
+// Manda en este momento los avisos de tus tareas pendientes (sin esperar a las 6:00 a. m.)
+let enviando=false;
+async function ahora(){if(enviando)return;enviando=true;try{await sync();const r=await fn('now');!r.tasks?info('Sin avisos que enviar','No tienes tareas pendientes que avisar hoy.'):r.sent?toast(`${r.tasks==1?'1 aviso enviado':r.tasks+' avisos enviados'} ✓ Llegarán en unos segundos`):info('Sin celular registrado','Toca “Activar avisos” primero.')}catch(e){toast('Error: '+e,null,'err')}finally{enviando=false}}

@@ -68,11 +68,15 @@ async function sendTo(uid: string, payloads: unknown[]) {
   return sent;
 }
 
-async function daily() {
+// Avisos de tareas de todos (cron) o de un solo usuario (botón "Enviar avisos ahora")
+async function daily(onlyUser?: string) {
   const today = limaToday();
-  const { data: tasks, error } = await sb.from("tasks").select("id,user_id,course_id,title,due_date,snooze_until").eq("done", false).eq("deleted", false).order("due_date");
+  let tq = sb.from("tasks").select("id,user_id,course_id,title,due_date,snooze_until").eq("done", false).eq("deleted", false).order("due_date");
+  let cq = sb.from("courses").select("id,abbr,cycle_id,deleted");
+  if (onlyUser) { tq = tq.eq("user_id", onlyUser); cq = cq.eq("user_id", onlyUser); }
+  const { data: tasks, error } = await tq;
   if (error) throw error;
-  const { data: courses } = await sb.from("courses").select("id,abbr,cycle_id,deleted");
+  const { data: courses } = await cq;
   const cm = new Map((courses ?? []).map((c) => [c.id, c]));
   const by = new Map<string, unknown[]>();
   for (const t of tasks ?? []) {
@@ -83,9 +87,9 @@ async function daily() {
     if (!by.has(t.user_id)) by.set(t.user_id, []);
     by.get(t.user_id)!.push(m);
   }
-  let sent = 0;
-  for (const [u, ps] of by) sent += await sendTo(u, ps);
-  return { sent };
+  let sent = 0, tasksN = 0;
+  for (const [u, ps] of by) { tasksN += ps.length; sent += await sendTo(u, ps); }
+  return { sent, tasks: tasksN };
 }
 
 Deno.serve(async (req) => {
@@ -119,6 +123,7 @@ Deno.serve(async (req) => {
         return json({ ok: true });
       }
       case "test": return json({ sent: await sendTo(user.id, [{ title: "🟢 Notas · Aviso de prueba", body: "Los avisos funcionan ✓", tag: "test", url: "./#tareas" }]) });
+      case "now": return json(await daily(user.id));
       default: return json({ error: "unknown action" }, 400);
     }
   } catch (e: any) {
