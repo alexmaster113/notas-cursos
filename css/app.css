@@ -59,12 +59,20 @@ input::placeholder,textarea::placeholder{color:var(--mu);opacity:1}
 .chips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 8px}
 .chip{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--bd);background:var(--cd);border-radius:99px;padding:7px 13px;min-height:40px;font-size:14px;font-weight:600}
 .chip.on{background:var(--tx);color:var(--bg);border-color:var(--tx)}
-.paper{flex:1;min-height:220px;resize:none;margin:0 0 8px;padding:6px 16px;border-radius:var(--r);font:18px/30px Georgia,"Times New Roman",serif;
- background:var(--cd) linear-gradient(transparent 29px,var(--rule) 29px) local;background-size:100% 30px;background-position:0 6px}
+/* Editor: cada línea dibuja sus propios renglones según su tamaño de letra (--lh) */
+.paper{flex:1;min-height:220px;overflow:auto;margin:0 0 8px;padding:6px 16px 24px;border:1px solid var(--bd);border-radius:var(--r);color:var(--tx);font:18px/30px Georgia,"Times New Roman",serif;
+ background:var(--cd) linear-gradient(transparent 29px,var(--rule) 29px) local;background-size:100% 30px;background-position:0 6px;overflow-wrap:anywhere;-webkit-tap-highlight-color:transparent}
+.paper:focus{outline:0;border-color:var(--ac);box-shadow:0 0 0 3px color-mix(in srgb,var(--ac) 22%,transparent)}
+.paper :is(p,div,h2,h3,li){--lh:30px;margin:0;line-height:var(--lh);min-height:var(--lh);background:var(--cd) linear-gradient(transparent calc(var(--lh) - 1px),var(--rule) 0) 0 0/100% var(--lh)}
+.paper h2{--lh:42px;font-size:26px;font-weight:700}.paper h3{--lh:36px;font-size:21px;font-weight:700}.paper .pq{--lh:24px;font-size:15px}
+.paper :is(ul,ol){margin:0;padding-left:26px}.paper li :is(ul,ol){padding-left:22px}
+.paper blockquote{margin:0 0 0 20px;padding-left:10px;border-left:2px solid color-mix(in srgb,var(--ac) 35%,transparent)}
+.paper mark{color:inherit;background:#fde68a;border-radius:3px;padding:0 1px}.paper .hl-g{background:#bbf7d0}.paper .hl-p{background:#fbcfe8}.paper .hl-c{background:#bae6fd}
+.paper>p:only-child:has(>br:only-child){position:relative}.paper>p:only-child:has(>br:only-child)::before{content:"Escribe aquí…";position:absolute;left:0;color:var(--mu);pointer-events:none}
 .tools{display:flex;gap:6px;align-items:center}
-.tools button{display:inline-flex;align-items:center;justify-content:center;gap:5px;height:44px;min-width:48px;padding:0 12px;border:1px solid var(--bd);background:var(--cd);border-radius:12px;font-size:14px;font-weight:600}
+.tools button{flex:1 1 auto;display:inline-flex;align-items:center;justify-content:center;gap:4px;height:44px;min-width:40px;padding:0 6px;border:1px solid var(--bd);background:var(--cd);border-radius:12px;font-size:14px;font-weight:600}
 .tools button b{font-size:12px;background:var(--ac);color:var(--on);border-radius:99px;padding:0 6px}.tools button b:empty{display:none}
-.tools span{margin-left:auto;font-size:12px;color:var(--mu);white-space:nowrap}
+.chips #st{margin-left:auto;align-self:center;font-size:12px;color:var(--mu);white-space:nowrap}
 /* Tareas */
 .add{display:inline-flex;align-items:center;gap:6px;border:0;background:var(--ac);color:var(--on);border-radius:99px;padding:9px 16px;min-height:44px;font-weight:700;font-size:14px}
 .tk{background:var(--cd);border:1px solid var(--bd);border-left:5px solid var(--tc,var(--bd));border-radius:var(--r);padding:13px 14px;margin:0 0 10px;box-shadow:var(--sh)}
@@ -103,6 +111,7 @@ input[type=color]{height:48px;padding:4px}
  box-shadow:0 8px 24px rgba(0,0,0,.25);z-index:30;opacity:0;transform:translateY(12px);transition:opacity .2s,transform .2s,visibility .2s;pointer-events:none;visibility:hidden}
 .toast.on{opacity:1;transform:none;pointer-events:auto;visibility:visible}.toast span{flex:1}.toast.err{background:#7f1d1d}
 .toast button{display:inline-flex;align-items:center;gap:5px;border:0;background:0;color:#a9b8ff;font-weight:700;padding:6px 8px;min-height:44px}
+@media(prefers-color-scheme:dark){.paper mark{background:#854d0e;color:#fff}.paper .hl-g{background:#166534}.paper .hl-p{background:#9d174d}.paper .hl-c{background:#075985}}
 @media(prefers-color-scheme:dark){.toast{background:#eceae4;color:#1f1d1a}.toast button{color:#3550d4}.toast.err{background:#fca5a5}.toast.err button{color:#1f1d1a}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 .ver{text-align:center;margin:18px 0 0;font-size:13px}

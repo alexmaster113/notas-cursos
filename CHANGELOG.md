@@ -2,6 +2,18 @@
 
 Todas las versiones de Notas de Cursos. Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); versiones `MAYOR.MENOR.PARCHE`. El número visible está en `js/core.js` (`VERSION`) y se muestra al final de Ajustes.
 
+## [2.4.0] - 2026-11-23
+### Agregado
+- **Editor con formato**: la nota deja de ser texto plano y se guarda como HTML limpio (solo etiquetas permitidas; lo demás se quita, también al pegar texto de otras páginas).
+- **Renglones que se adaptan al tamaño**: cada línea dibuja sus renglones según su tamaño de letra (Título 42 px, Subtítulo 36 px, normal 30 px, pequeño 24 px).
+- **Sangría ⇥ / ⇤** para ordenar ideas por niveles, con una línea guía a la izquierda; en viñetas crea sub-viñetas. Con teclado de PC funciona con Tab y Shift+Tab.
+- **Viñetas reales** (•) que se pueden anidar; la casilla ☐ se pone al inicio de la línea.
+- El editor ya sabe mostrar y guardar títulos, negrita, cursiva, subrayado, tachado y sombreado, para que la v2.5.0 (botón Aa) pueda fallar sin romper las notas.
+
+### Cambiado
+- Las notas viejas en texto plano se convierten solas al abrirlas; la búsqueda, la vista previa y "ya tiene notas" usan el texto sin formato.
+- "Guardado ✓" pasa a la fila de la fecha; los botones de abajo se reparten el ancho.
+
 ## [2.3.1] - 2026-11-23
 ### Agregado
 - Este registro de cambios, un `README.md` y tags de git para cada versión anterior.

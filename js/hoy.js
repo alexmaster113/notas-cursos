@@ -1,6 +1,6 @@
 // Pantalla "Hoy": curso del día, semana y tareas más urgentes
 const hola=()=>{const h=new Date().getHours();return h<12?'Buenos días':h<19?'Buenas tardes':'Buenas noches'};
-function todayCard(c,s){return`<button class=today style="--c:${col(c.color)}" onclick="openToday('${c.id}')"><span class=tg>${esc(c.abbr)}</span><b>${esc(c.name)}</b><span class=meta>${s?`Sesión ${s.number}${s.content.trim()?' · ya tiene notas':' · en blanco'}`:''}</span><span class=go>${I('pencil','xs')}Escribir</span></button>`}
+function todayCard(c,s){return`<button class=today style="--c:${col(c.color)}" onclick="openToday('${c.id}')"><span class=tg>${esc(c.abbr)}</span><b>${esc(c.name)}</b><span class=meta>${s?`Sesión ${s.number}${filled(s)?' · ya tiene notas':' · en blanco'}`:''}</span><span class=go>${I('pencil','xs')}Escribir</span></button>`}
 function nextClass(){const t=today();for(let i=1;i<=7;i++){const d=addd(t,i),c=cur0().find(c=>c.days.includes(wd(d)));if(c)return{c,i,d}}}
 function hoyV(){const t=today(),d=dt(t),cs=cur0().filter(c=>c.days.includes(wd(t))),nx=nextClass();
  let h=`<header class=hd><small>${hola()}</small><h1>${DIAS[d.getDay()]} ${d.getDate()} de ${MESES[d.getMonth()]}</h1></header>`;
