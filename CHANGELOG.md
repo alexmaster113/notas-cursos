@@ -1,0 +1,44 @@
+# Registro de cambios
+
+Todas las versiones de Notas de Cursos. Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); versiones `MAYOR.MENOR.PARCHE`. El número visible está en `js/core.js` (`VERSION`) y se muestra al final de Ajustes.
+
+## [2.3.1] - 2026-11-23
+### Agregado
+- Este registro de cambios, un `README.md` y tags de git para cada versión anterior.
+- El número de versión al final de Ajustes.
+
+## [2.3.0] - 2026-11-04
+### Agregado
+- Botón **"+ Sesión"** en la nota, junto a la fecha: crea la siguiente sesión del curso con la fecha de hoy (para cuando la profesora adelanta una clase). Las sesiones anteriores no se renumeran, la próxima semana sigue desde la nueva y se puede deshacer.
+
+### Corregido
+- El service worker pregunta siempre al servidor si hay versión nueva; antes el navegador podía mostrar archivos viejos un tiempo después de actualizar.
+
+## [2.2.0] - 2026-11-04
+### Agregado
+- **"Enviar avisos de tareas ahora"** en Ajustes → Avisos: manda en ese momento los mismos avisos del aviso diario de las 6:00 a. m., solo de las tareas del usuario.
+
+## [2.1.0] - 2026-11-03
+Revisión completa con ECC (código, seguridad, base de datos, accesibilidad) y Lighthouse (100/100/100 en móvil).
+
+### Corregido
+- La búsqueda de notas nunca funcionó (también fallaba en la v1).
+- Se perdían cambios si fallaba la red al sincronizar; la sincronización podía saltarse cambios hechos en otro dispositivo.
+- "Deshacer" dejaba de funcionar a los pocos segundos; "Nuevo ciclo" escondía la hoja del nombre.
+- Al volver a la app otro día se abría la sesión del día anterior.
+
+### Cambiado
+- Contraste WCAG AA en tarjetas, etiquetas y botones; botones táctiles de 44 px; las hojas se cierran con Atrás o Escape.
+- Importar una copia valida los datos; los adjuntos que no son foto o PDF se descargan en vez de abrirse.
+- Función de avisos más estricta (solo servicios de push reales, máximo 5 dispositivos) y claves de avisos nuevas creadas en el servidor.
+- El esquema de Supabase y la función de avisos quedan versionados en `supabase/`.
+
+## [2.0.0] - 2026-11-03
+### Cambiado
+- Código separado en `css/` y `js/` (antes era un solo `index.html`).
+- Diseño nuevo tipo cuaderno: íconos, color del curso como lomo, editor con renglones, modo oscuro, ventanas propias y avisos con "Deshacer".
+- Pestaña **Hoy** como panel: curso del día, semana y tareas próximas.
+- Nuevo hogar: GitHub `alexmaster113/notas-cursos` y el proyecto de Supabase `yxvdpqzpiqkkcucdyywt` (con avisos rehechos).
+
+## [1.0.0] - 2026-11-02
+Primera versión (repositorio `alexmaster11/notas-cursos`): notas por sesión con carpetas por curso, sesiones automáticas cada semana, tareas con colores y "Posponer 3 días", aviso diario a las 6:00 a. m., Nuevo ciclo, Papelera, exportar e importar, y adjuntos guardados en el celular.

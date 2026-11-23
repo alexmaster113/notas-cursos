@@ -1,5 +1,5 @@
 // Configuración, estado guardado, utilidades de fechas y navegación entre pantallas
-const SB='https://yxvdpqzpiqkkcucdyywt.supabase.co',KEY='sb_publishable_mHsaAjfGkjz3hjptYCbLBA_z2ZD3y7o',LS='nc1',$=s=>document.querySelector(s);
+const VERSION='2.3.1',SB='https://yxvdpqzpiqkkcucdyywt.supabase.co',KEY='sb_publishable_mHsaAjfGkjz3hjptYCbLBA_z2ZD3y7o',LS='nc1',$=s=>document.querySelector(s);
 let S=JSON.parse(localStorage.getItem(LS)||'null')||{courses:[],sessions:[],sync:'1970-01-01T00:00:00Z',auth:null},V='',cur=null,q='',tm,sy;
 S.tasks=S.tasks||[];S.cycles=S.cycles||[];
 if(S.sb!==SB){S.sb=SB;S.sync='1970-01-01T00:00:00Z';S.auth=null;[S.cycles,S.courses,S.sessions,S.tasks].forEach(a=>a.forEach(x=>x._d=1))}
