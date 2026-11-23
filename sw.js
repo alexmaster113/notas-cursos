@@ -1,4 +1,4 @@
-const C='nc-2.4.0',A=['./','index.html','css/app.css','js/core.js','js/ui.js','js/editor.js','js/hoy.js','js/notas.js','js/tareas.js','js/ajustes.js','js/adjuntos.js','js/sync.js','js/app.js','manifest.webmanifest','icon-192.png','icon-512.png'];
+const C='nc-2.5.0',A=['./','index.html','css/app.css','js/core.js','js/ui.js','js/editor.js','js/hoy.js','js/notas.js','js/tareas.js','js/ajustes.js','js/adjuntos.js','js/sync.js','js/app.js','manifest.webmanifest','icon-192.png','icon-512.png'];
 self.addEventListener('install',e=>e.waitUntil(caches.open(C).then(c=>c.addAll(A.map(u=>new Request(u,{cache:'reload'})))).then(()=>self.skipWaiting())));
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!=C).map(x=>caches.delete(x)))).then(()=>clients.claim())));
 // Primero la red (preguntando siempre si hay versión nueva); solo se guardan en caché respuestas buenas del mismo sitio (un 404 no pisa el archivo bueno)

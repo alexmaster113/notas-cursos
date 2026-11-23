@@ -2,6 +2,21 @@
 
 Todas las versiones de Notas de Cursos. Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); versiones `MAYOR.MENOR.PARCHE`. El número visible está en `js/core.js` (`VERSION`) y se muestra al final de Ajustes.
 
+## [2.5.0] - 2026-11-23
+### Agregado
+- **Botón Aa** en la barra de abajo de la nota: seleccionas el texto, tocas Aa y se despliegan 3 filas de opciones que se quedan abiertas hasta volver a tocar Aa:
+  - Tamaño de la línea: Título, Subtítulo, Normal y Pequeño (se aplica a la línea completa para que los renglones sigan alineados).
+  - Negrita, cursiva, subrayado, tachado y quitar formato.
+  - Sombreado amarillo, verde, rosa o celeste, y quitar sombreado.
+- Los botones se marcan según el formato donde está el cursor, para saber qué está aplicado.
+- Si al tocar un botón el celular quita la selección, la app usa la última selección que había en la nota.
+
+### Corregido (revisión ECC del editor)
+- Las notas con formato se guardan con un marcador interno: una nota vieja de texto plano que empiece por "<" (p. ej. apuntes de HTML) ya no se confunde con formato ni pierde texto.
+- Seleccionar una línea en Android ya no cambia también el tamaño de la línea siguiente; "Quitar sombreado" solo quita el del texto seleccionado.
+- Al pegar: si el contenido copiado no trae texto con formato útil, se pega el texto plano; títulos y tablas de otras páginas entran en líneas propias, y el texto de íconos SVG ya no se cuela.
+- Se conservan los espacios al inicio de las líneas de las notas viejas; el editor ya no puede quedarse sin guardar si falla un comando de formato.
+
 ## [2.4.0] - 2026-11-23
 ### Agregado
 - **Editor con formato**: la nota deja de ser texto plano y se guarda como HTML limpio (solo etiquetas permitidas; lo demás se quita, también al pegar texto de otras páginas).
